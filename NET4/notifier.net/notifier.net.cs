@@ -1,7 +1,7 @@
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 //!!!                                                   !!!
 //!!!  notifier.net на C#.        Автор: A.Б.Корниенко  !!!
-//!!!                             версия от 21.02.2025  !!!
+//!!!                             версия от 22.02.2025  !!!
 //!!!                                                   !!!
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -19,8 +19,8 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 
 public class f : Form {
-    ContextMenuStrip menu = new ContextMenuStrip();
     IContainer conta = new Container();
+    ContextMenuStrip menu = new ContextMenuStrip();
     ToolStripMenuItem menuT1 = new ToolStripMenuItem();
     ToolStripMenuItem menuT2 = new ToolStripMenuItem();
     ToolStripMenuItem menuT3 = new ToolStripMenuItem();
@@ -30,22 +30,21 @@ public class f : Form {
     ToolStripMenuItem menuR = new ToolStripMenuItem();
     StringBuilder messageData;
     StreamWriter logSW;
+    Random rnd1, rnd2;
+    Font fBold, fStd;
     TcpClient client;
     SslStream stream;
     NotifyIcon nIcon;
     StreamWriter sw;
     Thread tMon;
-    Font fBold, fStd;
-    Random rnd1, rnd2;
     Encoding win1251 = Encoding.GetEncoding(1251);
     static string Folder = Thread.GetDomain().BaseDirectory;
-    static Icon ico = Icon.ExtractAssociatedIcon(Folder+"notifier.net.exe");
-    string ini=Folder+"notifier.net.ini", imap, email, passw, passs, url, message,
-           min, authFailed, notConnect, checkInterval, unseen1, unseen2, unseen5,
+    string ini=Folder+"notifier.net.ini", imap, email, passw, passs, url, message, min,
+           authFailed, notConnect, checkInterval, unseen1, unseen2, unseen5, allSeen,
            begin, restart, quit;
     const string begin1 = "Connection...", notConnect1 = "The server does not connect",
-          unseen_1 = "unread email", unseen_2 = "unread emails", restart1 = "R&estart",
-          authFailed1 = "Authentication failed", quit1 = "Q&uit";
+          unseen_1 = "unread email", unseen_2 = "unread emails", allSeen1 = "No new emails",
+          restart1 = "R&estart", authFailed1 = "Authentication failed", quit1 = "Q&uit";
     const int secs1=30, show1=6400, min1=5, port1=993;
     const byte b27 = 27, b53 = 53, b64 = 64, b70 = 70, b91 = 91;
     char[] empty = new Char[] {' ','\t'};
@@ -225,11 +224,7 @@ public class f : Form {
 
     [STAThread]
     static void Main (string[] args) {
-
       Directory.SetCurrentDirectory(Folder);
-      if(!(ico != null)) ico = SystemIcons.Shield;
-
-      // https://learn.microsoft.com/en-us/dotnet/api/system.windows.forms.notifyicon?view=windowsdesktop-9.0&redirectedfrom=MSDN
       Application.Run( new f(args));
     }
 
@@ -274,7 +269,7 @@ public class f : Form {
 
       // The Icon property sets the icon that will appear
       // in the systray for this application.
-      nIcon.Icon = ico;
+      nIcon.Icon = Icon.ExtractAssociatedIcon(Folder+"notifier.net.exe");
 
       // The ContextMenu property sets the menu that will
       // appear when the systray icon is right clicked.
@@ -370,6 +365,9 @@ public class f : Form {
                       break;
                     case "unseen5":
                       unseen5 = val;
+                      break;
+                    case "allSeen":
+                      allSeen = val;
                       break;
                     case "min":
                       min = val;
@@ -513,10 +511,10 @@ public class f : Form {
     }
 
     bool findFolder(string x) {
-      for(int i = k1; i<k2; i++) {
-        if(opts[i].Length>0)
-        if((byte)opts[i][0]!=59)
-        if(opts[i]==x) return true;
+      for(int w = k1; w<k2; w++) {
+        if(opts[w].Length>0)
+        if((byte)opts[w][0]!=59)
+        if(opts[w].TrimStart(empty).PadRight(x.Length)==x) return true;
       }
       return false;
     }
@@ -533,11 +531,10 @@ public class f : Form {
     }
 
     async Task request(string expect1, string expect2) {
+      stream.Write(Encoding.UTF8.GetBytes(message));
       messageData = new StringBuilder();
-      k = Encoding.UTF8.GetBytes(message, 0, message.Length, bytes, 0);
-      stream.Write(bytes, 0, k);
       answer = 0;
-      while (k>0){
+      do {
         k = await stream.ReadAsync(bytes, 0, bytes.Length);
         message = Encoding.UTF8.GetString(bytes, 0, k);
         messageData.Append(message);
@@ -554,7 +551,7 @@ public class f : Form {
           answer = 1;
           k = 0;
         }
-      }
+      } while (k>0);
     }
 
     void iniMonitoring() {
@@ -569,6 +566,7 @@ public class f : Form {
       restart = restart1;
       unseen1 = unseen_1;
       unseen2 = unseen_2;
+      allSeen = allSeen1;
       begin = begin1;
       passw = "123";
       save = false;
@@ -640,16 +638,15 @@ public class f : Form {
               if(i1>0) {
                 u = 0;
                 folders = new string[i1];
-                while (iList.Count>0) {
-                  if(u<i1) {
-                    w = iList.Dequeue();
-                    message = mess[w].Substring(mess[w].IndexOf("\"",
-                              mess[w].IndexOf("\"")+1)+1).Trim(empty);
-                    if(i1 < nList) {
-                      if(findFolder(ImapToUtf8(message))) folders[u++] = message;
-                    } else {
-                      folders[u++] = message;
-                    }
+                while (u<i1 && iList.Count>0) {
+                  w = iList.Dequeue();
+                  message = mess[w].Substring(mess[w].IndexOf("\"",
+                            mess[w].IndexOf("\"")+1)+1).Trim(empty);
+
+                  if(i1 < nList) {
+                    if(findFolder(ImapToUtf8(message))) folders[u++] = message;
+                  } else {
+                    folders[u++] = message;
                   }
                 }
               }
@@ -658,7 +655,7 @@ public class f : Form {
 
             // Получить число непрочитанных писем
             message = String.Empty;
-            for(w=0; w<folders.Length; w++) 
+            for(w=0; w<folders.Length; w++)
                 message += "A"+(w+3).ToString("000")+" STATUS "+folders[w]+" (UNSEEN)\r\n";
             await request("A"+(folders.Length+2).ToString("000"), String.Empty);
             u = 0;
@@ -669,34 +666,39 @@ public class f : Form {
             }
             clientClose();
             n = repeat;
-            nIcon.Text = email;
-            while (notExit && m>i){
-              if(n>0 && u>0) {
-                if(unseen5.Length>0) {
-                  v = u%10;
-                  w = u%100;
-                  if(w==0 || w>20) {
-                    switch(v) {
-                    case 1:
-                      message = unseen1;
-                      break;
-                    case 5:
-                      message = unseen2;
-                      break;
-                    default:
-                      message = unseen5;
-                      break;
-                    }
-                  } else {
+            if(u>0) {
+              if(unseen5.Length>0) {
+                v = u%10;
+                w = u%100;
+                if(w<10 || w>20) {
+                  switch(v) {
+                  case 1:
+                    message = unseen1;
+                    break;
+                  case 5:
+                    message = unseen2;
+                    break;
+                  default:
                     message = unseen5;
+                    break;
                   }
                 } else {
-                  if(u>1) {
-                    message = unseen2;
-                  } else {
-                    message = unseen1;
-                  }
+                  message = unseen5;
                 }
+              } else {
+                if(u>1) {
+                  message = unseen2;
+                } else {
+                  message = unseen1;
+                }
+              }
+              nIcon.Text = email+"\n"+u+" "+message;
+            } else {
+              nIcon.Text = email+"\n"+allSeen;
+            }
+
+            while (notExit && m>i){
+              if(n>0 && u>0) {
                 nIcon.ShowBalloonTip(show1, email, u+" "+message, ToolTipIcon.None);
                 n--;
               }
