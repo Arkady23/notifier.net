@@ -675,7 +675,7 @@ public class f : Form {
                   case 1:
                     message = unseen1;
                     break;
-                  case 5:
+                  case 2:
                     message = unseen2;
                     break;
                   default:
