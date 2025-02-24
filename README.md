@@ -1,4 +1,4 @@
-# notifier.net
+# notifier.net/gnotifier.net
 Notifier of new emails.  
 Уведомитель о приходе новых писем.  
 ### Уведомитель позволяет
