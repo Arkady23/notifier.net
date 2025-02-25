@@ -1,7 +1,7 @@
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 //!!!                                                   !!!
 //!!!  notifier.net на C#.        Автор: A.Б.Корниенко  !!!
-//!!!                             версия от 23.02.2025  !!!
+//!!!  v0.0.3.0                             25.02.2025  !!!
 //!!!                                                   !!!
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -38,15 +38,16 @@ public class f : Form {
     StreamWriter sw;
     Thread tMon;
     Encoding win1251 = Encoding.GetEncoding(1251);
-    static string Folder = Thread.GetDomain().BaseDirectory;
-    string ini=Folder+"notifier.net.ini", imap, email, passw, passs, url, message, min,
-           authFailed, notConnect, checkInterval, unseen1, unseen2, unseen5, allSeen,
-           begin, restart, quit;
     const string begin1 = "Connection...", notConnect1 = "The server does not connect",
           unseen_1 = "unread email", unseen_2 = "unread emails", allSeen1 = "No new emails",
-          restart1 = "R&estart", authFailed1 = "Authentication failed", quit1 = "Q&uit";
+          restart1 = "R&estart", authFailed1 = "Authentication failed", quit1 = "Q&uit",
+          notifier1 = "notifier.net.";
     const int secs1=30, show1=6400, min1=5, port1=993;
     const byte b27 = 27, b53 = 53, b64 = 64, b70 = 70, b91 = 91;
+    static string Folder = Thread.GetDomain().BaseDirectory;
+    string ini=Folder+notifier1+"ini", imap, email, passw, passs, url, message, min,
+           authFailed, notConnect, checkInterval, unseen1, unseen2, unseen5, allSeen,
+           begin, restart, quit;
     char[] empty = new Char[] {' ','\t'};
     char[] rasdy = new Char[] {'=',';'};
     int i, j, k, n, m, p, q, r, h, u, v, w, i1, i2, i3, k1, k2, k3, nList,
@@ -84,6 +85,10 @@ public class f : Form {
       }
     }
 
+    void nIcon_Clicked(object Sender, MouseEventArgs e) {
+      if(e.Button != MouseButtons.Right) nIcon_BalloonTipClicked(null, null);
+    }
+
     void menuT1_Click(object Sender, EventArgs e) {
       updT(1, ref t1);
     }
@@ -106,18 +111,24 @@ public class f : Form {
 
     void menuR_Click(object Sender, EventArgs e) {
       iniMonitoring();
+      set_fStd(i2);
+      m = 0;
     }
 
     void menuQ_Click(object Sender, EventArgs e) {
       StopMonitoring();
     }
 
+    void set_fStd(int i) {
+      for (i2=1; i2<6; i2++) if(i2 != i) menu.Items[i2].Font = fStd;
+    }
+
     void updT(int i, ref int t) {
       if (mins != t) {
-        m += (t-mins)*60000;
         mins = t;
         updMins();
-        for (i2=1; i2<6; i2++) if(i2 != i) menu.Items[i2].Font = fStd;
+        set_fStd(i);
+        m = 0;
       }
     }
 
@@ -153,7 +164,7 @@ public class f : Form {
 
     void log(string x) {
       if(!(logSW != null)){
-        logSW = new StreamWriter(new FileStream(Folder+"notifier.net.log", FileMode.Create,
+        logSW = new StreamWriter(new FileStream(Folder+notifier1+"log", FileMode.Create,
                                      FileAccess.Write, FileShare.ReadWrite));
         Console.SetOut(logSW);
       }
@@ -269,7 +280,7 @@ public class f : Form {
 
       // The Icon property sets the icon that will appear
       // in the systray for this application.
-      nIcon.Icon = Icon.ExtractAssociatedIcon(Folder+"notifier.net.exe");
+      nIcon.Icon = Icon.ExtractAssociatedIcon(Folder+notifier1+"exe");
 
       // The ContextMenu property sets the menu that will
       // appear when the systray icon is right clicked.
@@ -283,7 +294,7 @@ public class f : Form {
       nIcon.BalloonTipShown += new EventHandler(nIcon_BalloonTipShown);
       nIcon.BalloonTipClosed += new EventHandler(nIcon_BalloonTipClosed);
       nIcon.BalloonTipClicked += new EventHandler(nIcon_BalloonTipClicked);
-      nIcon.DoubleClick += new EventHandler(nIcon_BalloonTipClicked);
+      nIcon.MouseClick += new MouseEventHandler(nIcon_Clicked);
 
       fBold = new Font(menuT1.Font, menuT1.Font.Style | FontStyle.Bold);
       fStd = new Font(menuT1.Font, menuT1.Font.Style);
@@ -593,6 +604,13 @@ public class f : Form {
       repeat = mins*2-2;
     }
 
+    void sleepM() {
+      while (notExit && m>i){
+        Thread.Sleep(i);
+        m -= i;
+      }
+    }
+
     async void startMonitoring() {
       while (notExit){
         m = mins*60000;
@@ -711,13 +729,13 @@ public class f : Form {
             clientClose();
             nIcon.Text = authFailed;
             nIcon.ShowBalloonTip(show1, email, authFailed, ToolTipIcon.Warning);
-            Thread.Sleep(m);
+            sleepM();
           }
         } else {
           clientClose();
           nIcon.Text = notConnect;
           nIcon.ShowBalloonTip(show1, email, notConnect, ToolTipIcon.Error);
-          Thread.Sleep(m);
+          sleepM();
         }
       }
     }
