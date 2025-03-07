@@ -1,7 +1,7 @@
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 //!!!                                                   !!!
 //!!!  notifier.net на C#.        Автор: A.Б.Корниенко  !!!
-//!!!  v0.1.0.0                             05.03.2025  !!!
+//!!!  v0.1.1.0                             07.03.2025  !!!
 //!!!                                                   !!!
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -723,7 +723,11 @@ public class f : Form {
       messageData = new StringBuilder();
       answer = 0;
       do {
-        k = await stream.ReadAsync(bytes, 0, bytes.Length);
+        try {
+          k = await stream.ReadAsync(bytes, 0, bytes.Length);
+        } catch (Exception) {
+          k = 0;
+        }
         message = Encoding.UTF8.GetString(bytes, 0, k);
         messageData.Append(message);
         j = message.LastIndexOf(expect1);
