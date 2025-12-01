@@ -540,7 +540,8 @@ public class f : Form {
                       url=val;
                       break;
                     case "showErrors":
-                      showErrors= val.Length<3? false:true;
+                      showErrors = (val=="0" || 
+                        val.IndexOf("No",StringComparison.OrdinalIgnoreCase)==0)? false:true;
                       break;
                     case "mins":
                       if(!int.TryParse(val, out mins)) mins=min1;
