@@ -1,7 +1,7 @@
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 //!!!                                                   !!!
 //!!!  notifier.net на C#.        Автор: A.Б.Корниенко  !!!
-//!!!  v0.2.0.0                             19.11.2025  !!!
+//!!!  v0.3.0.0                             01.12.2025  !!!
 //!!!                                                   !!!
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -41,20 +41,22 @@ public class f : Form {
     const string begin1 = "Connection...", notConnect1 = "The server does not connect",
           unseen_1 = "unread email", unseen_2 = "unread emails", allSeen1 = "No new emails",
           restart1 = "R&estart", authFailed1 = "Authentication failed", quit1 = "Q&uit",
-          notifier1 = "notifier.net.";
-    const int secs1=30, show1=6400, min1=5, port1=993;
+          notifier1 = "notifier.net.", CRLF = "\r\n";
+    const int secs1=30, show1=6100, min1=5, port1=993;
     const byte b27 = 27, b53 = 53, b64 = 64, b70 = 70, b91 = 91;
     static string Folder = Thread.GetDomain().BaseDirectory;
-    string ini=Folder+notifier1+"ini", imap, email, passw, passs, url, message, min,
-           authFailed, notConnect, checkInterval, unseen1, unseen2, unseen5, allSeen,
-           begin, restart, quit;
+    static string exe=Folder+notifier1+"exe";
+    string auto = Environment.GetFolderPath(Environment.SpecialFolder.Startup)+"\\"+
+           notifier1+"url", ini=Folder+notifier1+"ini", imap, email, passw, passs, url,
+           message, min, authFailed, notConnect, checkInterval, unseen1, unseen2, unseen5,
+           allSeen, begin, restart, quit;
     char[] empty = new Char[] {' ','\t'};
     char[] rasdy = new Char[] {'=',';'};
     int i, j, k, n, m, p, q, r, h, u, v, w, i1, i2, i3, k1, k2, k3, nList,
         port, mins, repeat, t1, t2, t3, t4, t5;
     byte[] bb, bs, b1, b2 = new Byte[2], bytes = new byte[2048];
-    bool l, save, notExit = true;
-    string[] param, opts, mess, folders, crlf = new string[] { "\r\n" },
+    bool l, save, showErrors, notExit = true;
+    string[] param, opts, mess, folders, crlf = new string[] { CRLF },
              unseen = new string[] { "(UNSEEN" };
     byte answer, key, len;
     DateTime dt;
@@ -237,7 +239,7 @@ public class f : Form {
         0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,224,0,0,7,224,0,0,7,255,255,
         255,255,255,255,255,255
     };
-    Icon ico0 = Icon.ExtractAssociatedIcon(Folder+notifier1+"exe"),
+    Icon ico0 = Icon.ExtractAssociatedIcon(exe),
          ico1 = new Icon(new MemoryStream(icobin1));
 
     protected override void Dispose( bool disposing ) {
@@ -300,6 +302,7 @@ public class f : Form {
     }
 
     void menuQ_Click(object Sender, EventArgs e) {
+      l = autoDelete();
       StopMonitoring();
     }
 
@@ -536,6 +539,9 @@ public class f : Form {
                     case "url":
                       url=val;
                       break;
+                    case "showErrors":
+                      showErrors= val.Length<3? false:true;
+                      break;
                     case "mins":
                       if(!int.TryParse(val, out mins)) mins=min1;
                       if(mins<1) mins = 1;
@@ -653,7 +659,7 @@ public class f : Form {
     }
 
     void writeOpts(int from, int to) {
-      if(from<to) sw.WriteLine(String.Join("\r\n", opts, from, to-from));
+      if(from<to) sw.WriteLine(String.Join(CRLF, opts, from, to-from));
     }
 
     void writeFolders() {
@@ -721,6 +727,7 @@ public class f : Form {
 
     void RunMonitoring() {
        iniMonitoring();
+       autoRunLnk();
        tMon = new Thread(startMonitoring);
        tMon.Start();
     }
@@ -805,6 +812,33 @@ public class f : Form {
       }
     }
 
+    // Если необходимо, то создать ярлык в папке Startup
+    void autoRunLnk() {
+      l = File.Exists(auto);
+      exe = exe.Replace("\\", "/");
+      if(l) {
+        try {
+          l = File.ReadAllText(auto).Contains(exe);
+        } catch (Exception) {
+          l = true;
+        }
+      }
+      if(!l) if(autoDelete()) {
+        File.WriteAllText(auto, "[InternetShortcut]"+CRLF+"URL=file:///"+exe+CRLF+
+            "IconFile="+exe+CRLF+"IconIndex=0"+CRLF);
+      }
+    }
+
+    // Удалить ярлык из папки Startup
+    bool autoDelete() {
+      try {
+        File.Delete(auto);
+      } catch (Exception) {
+        return false;
+      }
+      return true;
+    }
+
     async void startMonitoring() {
       while (notExit){
         m = mins*60000;
@@ -825,11 +859,11 @@ public class f : Form {
           // Описание альтернативной регистрации через AUTHENTICATE
           // https://new2.intuit.ru/en/studies/courses/116/116/lecture/3367?page=1
           // https://intuit.ru/en/studies/courses/116/116/lecture/3367
-          message = "A001 LOGIN "+email+" "+passw+"\r\n";
+          message = "A001 LOGIN "+email+" "+passw+CRLF;
           if(folders != null) {
             await request("A001 O", "A001 N");
           } else {
-            message += "A002 LIST \"\" \"*\"\r\n";
+            message += "A002 LIST \"\" \"*\""+CRLF;
             await request("A002", "A001 N");
           }
 
@@ -868,7 +902,7 @@ public class f : Form {
             // Получить число непрочитанных писем
             message = String.Empty;
             for(w=0; w<folders.Length; w++)
-                message += "A"+(w+3).ToString("000")+" STATUS "+folders[w]+" (UNSEEN)\r\n";
+                message += "A"+(w+3).ToString("000")+" STATUS "+folders[w]+" (UNSEEN)"+CRLF;
             await request("A"+(folders.Length+2).ToString("000"), String.Empty);
             u = 0;
             foreach (string v in messageData.ToString().Split(unseen, StringSplitOptions.None))
@@ -928,8 +962,10 @@ public class f : Form {
           }
         } else {
           clientClose();
-          nIcon.Text = notConnect;
-          nIcon.ShowBalloonTip(show1, email, notConnect, ToolTipIcon.Error);
+          if(showErrors){
+            nIcon.Text = notConnect;
+            nIcon.ShowBalloonTip(show1, email, notConnect, ToolTipIcon.Error);
+          }
           sleepM();
         }
       }
