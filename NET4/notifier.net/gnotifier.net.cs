@@ -1,7 +1,7 @@
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 //!!!                                                   !!!
 //!!!  gnotifier.net на C#.       Автор: A.Б.Корниенко  !!!
-//!!!  v0.3.0.0                             01.12.2025  !!!
+//!!!  v0.3.0.0                             02.12.2025  !!!
 //!!!                                                   !!!
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -765,8 +765,8 @@ public class f : Form {
       notConnect = notConnect1;
       authFailed = authFailed1;
       unseen5 = String.Empty;
-      imap = "imap.mail.ru";
-      email = "me@mail.ru";
+      imap = "imap.gmail.com";
+      email = "me@gmail.com";
       restart = restart1;
       unseen1 = unseen_1;
       unseen2 = unseen_2;
