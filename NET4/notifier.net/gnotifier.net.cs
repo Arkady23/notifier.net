@@ -1,7 +1,7 @@
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 //!!!                                                   !!!
 //!!!  gnotifier.net на C#.       Автор: A.Б.Корниенко  !!!
-//!!!  v0.3.0.0                             02.12.2025  !!!
+//!!!  v0.3.1.0                             16.03.2026  !!!
 //!!!                                                   !!!
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -18,7 +18,7 @@ using System.ComponentModel;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-public class f : Form {
+public class f : ApplicationContext {
     IContainer conta = new Container();
     ContextMenuStrip menu = new ContextMenuStrip();
     ToolStripMenuItem menuT1 = new ToolStripMenuItem();
@@ -420,14 +420,12 @@ public class f : Form {
     [STAThread]
     static void Main (string[] args) {
       Directory.SetCurrentDirectory(Folder);
+      Application.EnableVisualStyles();
+      Application.SetCompatibleTextRenderingDefault(false);
       Application.Run( new f(args));
     }
 
     public f(string[] args) {
-
-      // Никаких окон не надо
-      this.WindowState = FormWindowState.Minimized;
-      this.ShowInTaskbar = false;
 
       // Анонимная функция перехвата и вывода ошибки
       AppDomain.CurrentDomain.UnhandledException += (sender, eventArgs) =>
@@ -972,7 +970,7 @@ public class f : Form {
 
     void StopMonitoring(){
       notExit = false;
-      this.Close();
+      Application.Exit();
     }
 
 }
