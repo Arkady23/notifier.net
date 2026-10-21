@@ -1,7 +1,7 @@
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 //!!!                                                   !!!
 //!!!  notifier.net на C#.        Автор: A.Б.Корниенко  !!!
-//!!!  v0.4.0.0                             20.10.2026  !!!
+//!!!  v0.4.1.0                             21.10.2026  !!!
 //!!!                                                   !!!
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -188,7 +188,7 @@ public class f : ApplicationContext {
         string userProfileId = Environment.UserDomainName + "\\" + Environment.UserName;
         int seed = 0;
         foreach (char c in userProfileId) {
-          seed = (seed * 31) + c;
+          seed = (((seed << 5) - seed) + c) & 0x3FFFFFF;
         }
         return seed;
       } catch { }
