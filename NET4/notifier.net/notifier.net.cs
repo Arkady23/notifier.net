@@ -236,10 +236,10 @@ public class f : ApplicationContext {
         Array.Sort(bb,bs);
         Array.Sort(bs,b1);
         len = b1[0];
-        if(len>b53) {
-          len -= (len<b91 ? b64 : b70);
-        } else {
+        if(len<b64) {
           len += b4;
+        } else{
+          len -= (len<b91 ? b64 : b70);
         }
         if(b1.Length>len) {
           passw = win1251.GetString(b1,1,len);
