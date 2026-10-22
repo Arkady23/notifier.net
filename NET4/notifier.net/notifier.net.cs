@@ -1,7 +1,7 @@
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 //!!!                                                   !!!
 //!!!  notifier.net на C#.        Автор: A.Б.Корниенко  !!!
-//!!!  v0.4.1.0                             21.10.2026  !!!
+//!!!  v0.4.2.0                             22.10.2026  !!!
 //!!!                                                   !!!
 //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -30,6 +30,7 @@ public class f : ApplicationContext {
     ToolStripMenuItem menuR = new ToolStripMenuItem();
     StringBuilder messageData;
     StreamWriter logSW;
+    Random rnd1, rnd2;
     Font fBold, fStd;
     TcpClient client;
     SslStream stream;
@@ -42,24 +43,22 @@ public class f : ApplicationContext {
           restart1 = "R&estart", authFailed1 = "Authentication failed", quit1 = "Q&uit",
           notifier1 = "notifier.net.", CRLF = "\r\n";
     const int secs1=30, show1=6100, min1=5, port1=993;
-    const byte b27 = 27, b53 = 53, b64 = 64, b70 = 70, b91 = 91;
+    const byte b4=4, b27=27, b53=53, b64=64, b70=70, b91=91;
     static string Folder = Thread.GetDomain().BaseDirectory;
     static string exe=Folder+notifier1+"exe";
     string auto = Environment.GetFolderPath(Environment.SpecialFolder.Startup)+"\\"+
            notifier1+"url", ini=Folder+notifier1+"ini", imap, email, passw, passs, url,
            message, min, authFailed, notConnect, checkInterval, unseen1, unseen2, unseen5,
            allSeen, begin, restart, quit;
-    char[] SafeAlphabet =
-          "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".ToCharArray();
     char[] empty = new Char[] {' ','\t'};
     char[] rasdy = new Char[] {'=',';'};
-    int i, j, k, n, m, h, u, v, w, i1, i2, i3, k1, k2, k3, nList, port, mins, repeat,
-        t1, t2, t3, t4, t5;
-    byte[] b2 = new Byte[2], bytes = new byte[2048];
+    int i, j, k, n, m, h, p, q, r, u, v, w, i1, i2, i3, k1, k2, k3, nList, port,
+        mins, repeat, t1, t2, t3, t4, t5;
+    byte[] bb, bs, b1, bytes= new byte[2048];
     bool l, save, showErrors, notExit = true;
     string[] param, opts, mess, folders, crlf = new string[] { CRLF },
              unseen = new string[] { "(UNSEEN" };
-    byte answer;
+    byte answer, len;
     DateTime dt;
     Icon ico0 = Icon.ExtractAssociatedIcon(exe),
          ico1 = new Icon(System.Reflection.Assembly.GetExecutingAssembly()
@@ -195,64 +194,57 @@ public class f : ApplicationContext {
       return 8394021; 
     }
 
-    // Запутать пароль и привязать к профилю Windows, чтобы никто не украл
+    // Запутать пароль, чтобы никто не украл
     void getPasss() {
-      if (passw.Length == 0) passw = "123";
-      string input = passw.Length > 92? passw.Substring(0,92): passw;
-      int i, j, dig = 30;
-      int seed = GetMachineSeed();
-      int originalLength = input.Length;
-      Random rand = new Random(seed);
-      if (input.Length < dig) {
-        int needed = dig - input.Length;
-        char[] padding = new char[needed];
-        for (i = 0; i < needed; i++) {
-          padding[i] = SafeAlphabet[rand.Next(0, SafeAlphabet.Length)];
-        }
-        input += new string(padding);
+      int k1;
+      q = passw.Length>62? 62:passw.Length;
+      len = (byte)q;
+      if(len<b27) {
+        len += b64;
+      } else if(len<b53){
+        len += b70;
+      } else {
+        len -= b4;
       }
-      char lenChar1 = SafeAlphabet[originalLength / SafeAlphabet.Length];
-      char lenChar2 = SafeAlphabet[originalLength % SafeAlphabet.Length];
-      char[] chars = new char[input.Length + 2];
-      chars[0] = lenChar1;
-      chars[1] = lenChar2;
-      Array.Copy(input.ToCharArray(), 0, chars, 2, input.Length);
-      for (i = chars.Length - 1; i > 0; i--) {
-        char temp = chars[i];
-        j = rand.Next(0, i + 1);
-        chars[i] = chars[j];
-        chars[j] = temp;
+      rnd1 = new Random();
+      rnd2 = new Random(GetMachineSeed());
+      r = q<20? 20: (q/10+1)*10;
+      bb = new Byte[r];
+      rnd2.NextBytes(bb);
+      passs = " " + passw;
+      for(p = q+1; p<r; p++) {
+        k1 = rnd1.Next(65,117);
+        if(k1>90) k1 += 6;
+        passs += (char)k1;
       }
+      b1 = win1251.GetBytes(passs);
+      b1[0] = len;
       save = notExit;
-      passs = new string(chars);
+      Array.Sort(bb,b1);
+      passs = win1251.GetString(b1);
     }
 
     void getPassw() {
-      if (passs.Length < 8) return;
-      int i, j;
-      int seed = GetMachineSeed();
-      char[] chars = passs.ToCharArray();
-      Random rand = new Random(seed);
-      int[] swapIndices = new int[chars.Length];
-      for (i = chars.Length - 1; i > 0; i--) {
-        swapIndices[i] = rand.Next(0, i + 1);
+      if(passs.Length>1) {
+        b1 = new Byte[passs.Length];
+        win1251.GetBytes(passs,0,b1.Length,b1,0);
+        rnd2 = new Random(GetMachineSeed());
+        bs = new Byte[b1.Length];
+        bb = new Byte[b1.Length];
+        for(p=0; p<b1.Length; p++) bs[p] = (byte)p;
+        rnd2.NextBytes(bb);
+        Array.Sort(bb,bs);
+        Array.Sort(bs,b1);
+        len = b1[0];
+        if(len>b53) {
+          len -= (len<b91 ? b64 : b70);
+        } else {
+          len += b4;
+        }
+        if(b1.Length>len) {
+          passw = win1251.GetString(b1,1,len);
+        }
       }
-      for (i = 1; i < chars.Length; i++) {
-        char temp = chars[i];
-        j = swapIndices[i];
-        chars[i] = chars[j];
-        chars[j] = temp;
-      }
-      char lenChar1 = chars[0];
-      char lenChar2 = chars[1];
-      int idx1 = Array.IndexOf(SafeAlphabet, lenChar1);
-      int idx2 = Array.IndexOf(SafeAlphabet, lenChar2);
-      if (idx1 == -1 || idx2 == -1) return;
-      int originalLength = (idx1 * SafeAlphabet.Length) + idx2;
-      if (originalLength <= 0 || originalLength > 92 || originalLength > chars.Length - 2) {
-        return;
-      }
-      passw = new string(chars, 2, originalLength);
     }
 
     [STAThread]
